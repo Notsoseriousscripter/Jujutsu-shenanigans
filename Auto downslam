@@ -1,14 +1,27 @@
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "Jujutsu Shenanigans",
+    LoadingTitle = "Better Downslam",
+    LoadingSubtitle = "by you",
+    ConfigurationSaving = {
+        Enabled = false
+    }
+})
+
+local MainTab = Window:CreateTab("Main", 4483362458)
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local UserInputService = game:GetService("UserInputService")
 
 local LocalPlayer = Players.LocalPlayer
-local KnitServices = ReplicatedStorage.Knit.Knit.Services
+local KnitServices = ReplicatedStorage:WaitForChild("Knit"):WaitForChild("Knit"):WaitForChild("Services")
 
 local AutoEnabled = false
 local Mode = "Down"
 
 local ActivatedRemotes = {}
+
 for _, service in ipairs(KnitServices:GetChildren()) do
     local reFolder = service:FindFirstChild("RE")
     if reFolder then
@@ -19,127 +32,46 @@ for _, service in ipairs(KnitServices:GetChildren()) do
     end
 end
 
-local gui = Instance.new("ScreenGui")
-gui.Name = "AutoDownslamGui"
-gui.ResetOnSpawn = false
-gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+MainTab:CreateDropdown({
+    Name = "Downslam Mode",
+    Options = {"Down", "Up"},
+    CurrentOption = {"Down"},
+    MultipleOptions = false,
+    Flag = "ModeSelect",
+    Callback = function(Option)
+        Mode = Option[1]
+    end,
+})
 
-local toggleBtn = Instance.new("TextButton")
-toggleBtn.Size = UDim2.new(0, 72, 0, 26)
-toggleBtn.Position = UDim2.new(0, 16, 0, 180)
-toggleBtn.Text = "Toggle"
-toggleBtn.Font = Enum.Font.Gotham
-toggleBtn.TextScaled = true
-toggleBtn.BackgroundColor3 = Color3.fromRGB(28,28,28)
-toggleBtn.TextColor3 = Color3.fromRGB(220,220,220)
-toggleBtn.Parent = gui
-Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 8)
-
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 208, 0, 96)
-frame.Position = UDim2.new(0, 16, 0, 210)
-frame.BackgroundColor3 = Color3.fromRGB(26,26,26)
-frame.Parent = gui
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
-
-local stroke = Instance.new("UIStroke")
-stroke.Color = Color3.fromRGB(50,50,50)
-stroke.Thickness = 1.5
-stroke.Parent = frame
-
-toggleBtn.MouseButton1Click:Connect(function()
-    frame.Visible = not frame.Visible
-end)
-
-local power = Instance.new("TextButton")
-power.Size = UDim2.new(0, 56, 0, 56)
-power.Position = UDim2.new(0.5, -28, 0.5, -28)
-power.Text = "OFF"
-power.Font = Enum.Font.GothamBold
-power.TextScaled = true
-power.BackgroundColor3 = Color3.fromRGB(140,0,0)
-power.TextColor3 = Color3.new(1,1,1)
-power.Parent = frame
-Instance.new("UICorner", power).CornerRadius = UDim.new(1,0)
-
-local function createOption(text)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 60, 0, 24)
-    btn.Text = text
-    btn.Font = Enum.Font.Gotham
-    btn.TextScaled = true
-    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    btn.TextColor3 = Color3.fromRGB(230,230,230)
-    btn.Parent = frame
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
-    return btn
-end
-
-local DownBtn = createOption("Down")
-DownBtn.Position = UDim2.new(0, 8, 0.5, -12)
-
-local UpBtn = createOption("Up")
-UpBtn.Position = UDim2.new(1, -68, 0.5, -12)
-
-local function refreshMode()
-    DownBtn.BackgroundColor3 = Mode == "Down" and Color3.fromRGB(0,120,255) or Color3.fromRGB(40,40,40)
-    UpBtn.BackgroundColor3 = Mode == "Up" and Color3.fromRGB(0,120,255) or Color3.fromRGB(40,40,40)
-end
-refreshMode()
-
-DownBtn.MouseButton1Click:Connect(function()
-    Mode = "Down"
-    refreshMode()
-end)
-
-UpBtn.MouseButton1Click:Connect(function()
-    Mode = "Up"
-    refreshMode()
-end)
-
-power.MouseButton1Click:Connect(function()
-    AutoEnabled = not AutoEnabled
-    power.Text = AutoEnabled and "ON" or "OFF"
-    power.BackgroundColor3 = AutoEnabled and Color3.fromRGB(0,170,0) or Color3.fromRGB(140,0,0)
-end)
-
-local dragging = false
-local dragStart, startPos
-
-frame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = frame.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-
-frame.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragStart
-        frame.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-    end
-end)
+MainTab:CreateToggle({
+    Name = "Better Downslam",
+    CurrentValue = false,
+    Flag = "BetterDownslamToggle",
+    Callback = function(Value)
+        AutoEnabled = Value
+    end,
+})
 
 local old
 old = hookmetamethod(game, "__namecall", function(self, ...)
-    if not AutoEnabled then return old(self, ...) end
-    if getnamecallmethod() ~= "FireServer" then return old(self, ...) end
-    if not ActivatedRemotes[self] then return old(self, ...) end
+    if not AutoEnabled then
+        return old(self, ...)
+    end
+
+    if getnamecallmethod() ~= "FireServer" then
+        return old(self, ...)
+    end
+
+    if not ActivatedRemotes[self] then
+        return old(self, ...)
+    end
+
     local args = { ... }
+
     if args[1] == false then
         args[1] = Mode
         return old(self, unpack(args))
     end
+
     return old(self, ...)
 end)
